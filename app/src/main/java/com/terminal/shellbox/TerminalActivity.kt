@@ -1,6 +1,8 @@
 package com.terminal.shellbox
 
+import android.graphics.Color
 import android.os.Bundle
+import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -15,14 +17,14 @@ class TerminalActivity : AppCompatActivity() {
 
         val mainLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(0xFF000000.toInt())
+            setBackgroundColor(Color.BLACK)
         }
 
         val extraKeysBar = createExtraKeysBar()
         mainLayout.addView(extraKeysBar)
 
         terminalOutput = TextView(this).apply {
-            setTextColor(0xFF00FF00.toInt())
+            setTextColor(Color.GREEN)
             textSize = 14f
             text = "Terminal Session Started...\nType 'exit' to return to main menu.\n\n$ "
             layoutParams = LinearLayout.LayoutParams(
@@ -38,10 +40,11 @@ class TerminalActivity : AppCompatActivity() {
         runShellProcess(shellCmd)
     }
 
-    private fun createExtraKeysBar(): LinearLayout {
+    private fun createExtraKeysBar(): HorizontalScrollView {
+        val scrollView = HorizontalScrollView(this)
         val bar = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            setBackgroundColor(0xFF161B22.toInt())
+            setBackgroundColor(Color.parseColor("#161B22"))
             setPadding(8, 8, 8, 8)
         }
 
@@ -49,8 +52,8 @@ class TerminalActivity : AppCompatActivity() {
         for (key in keys) {
             val btn = TextView(this).apply {
                 text = key
-                setTextColor(0xFFFFFFFF.toInt())
-                setPadding(16, 8, 16, 8)
+                setTextColor(Color.WHITE)
+                setPadding(24, 12, 24, 12)
                 textSize = 12f
                 isClickable = true
                 setOnClickListener {
@@ -59,7 +62,8 @@ class TerminalActivity : AppCompatActivity() {
             }
             bar.addView(btn)
         }
-        return bar
+        scrollView.addView(bar)
+        return scrollView
     }
 
     private fun runShellProcess(command: String) {
@@ -71,7 +75,7 @@ class TerminalActivity : AppCompatActivity() {
                 } else {
                     ProcessBuilder("/system/bin/sh")
                 }
-                
+
                 val process = processBuilder.start()
                 process.waitFor()
 
