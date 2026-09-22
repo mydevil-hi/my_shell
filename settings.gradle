@@ -1,0 +1,2 @@
+rootProject.name = "ShellBox"
+include ':app'
