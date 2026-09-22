@@ -1,92 +1,112 @@
 package com.terminal.shellbox
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.appcompat.app.AppCompatActivity
 import java.io.File
-
-val DarkBg = Color(0xFF0D1117)
-val CardBg = Color(0xFF161B22)
-val AccentCyan = Color(0xFF58A6FF)
-val StatusGreen = Color(0xFF3FB950)
-val TextWhite = Color(0xFFF0F6FC)
-val TextMuted = Color(0xFF8B949E)
 
 data class ShellModel(
     val name: String,
     val command: String,
-    val description: String,
-    val downloadUrl: String
+    val description: String
 )
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val shells = listOf(
-        ShellModel("Bash", "bash", "البيئة القياسية والأكثر استقراراً", "https://packages.termux.dev/apt/termux-main/pool/main/b/bash/bash_5.2.21_aarch64.deb"),
-        ShellModel("Zsh", "zsh", "إكمال تلقائي وثيمات متطورة", "https://packages.termux.dev/apt/termux-main/pool/main/z/zsh/zsh_5.9_aarch64.deb"),
-        ShellModel("Fish", "fish", "اقتراحات تلقائية وألوان زاهية", "https://packages.termux.dev/apt/termux-main/pool/main/f/fish/fish_3.7.0_aarch64.deb"),
-        ShellModel("Nushell", "nu", "طرفية حديثة تعتمد البيانات البرمجية", "https://github.com/nushell/nushell/releases/download/0.90.1/nu-0.90.1-aarch64-linux-android.tar.gz")
+        ShellModel("Bash", "bash", "البيئة القياسية والأكثر استقراراً"),
+        ShellModel("Zsh", "zsh", "إكمال تلقائي وثيمات متطورة"),
+        ShellModel("Fish", "fish", "اقتراحات تلقائية وألوان زاهية"),
+        ShellModel("Nushell", "nu", "طرفية حديثة تعتمد البيانات البرمجية")
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContent {
-            var refreshState by remember { mutableStateOf(0) }
+        val rootLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#0D1117"))
+            setPadding(32, 32, 32, 32)
+        }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(DarkBg)
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = "$ ShellBox Environment",
-                    color = AccentCyan,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace,
-                    modifier = Modifier.padding(vertical = 12.dp)
-                )
+        val titleText = TextView(this).apply {
+            text = "$ ShellBox Environment"
+            setTextColor(Color.parseColor("#58A6FF"))
+            textSize = 22f
+            setPadding(0, 0, 0, 32)
+        }
+        rootLayout.addView(titleText)
 
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(shells) { shell ->
-                        val isInstalled = isShellInstalled(shell.command)
-                        ShellCard(
-                            shell = shell,
-                            isInstalled = isInstalled,
-                            onAction = {
-                                if (isInstalled) {
-                                    launchTerminal(shell.command)
-                                } else {
-                                    downloadAndInstall(shell) {
-                                        refreshState++
-                                    }
-                                }
-                            }
-                        )
+        for (shell in shells) {
+            val cardView = createShellCard(shell)
+            rootLayout.addView(cardView)
+        }
+
+        setContentView(rootLayout)
+    }
+
+    private fun createShellCard(shell: ShellModel): LinearLayout {
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setBackgroundColor(Color.parseColor("#161B22"))
+            setPadding(24, 24, 24, 24)
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.setMargins(0, 0, 0, 24)
+            layoutParams = params
+        }
+
+        val infoLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+
+        val nameText = TextView(this).apply {
+            text = shell.name
+            setTextColor(Color.parseColor("#F0F6FC"))
+            textSize = 18f
+        }
+
+        val descText = TextView(this).apply {
+            text = shell.description
+            setTextColor(Color.parseColor("#8B949E"))
+            textSize = 12f
+        }
+
+        infoLayout.addView(nameText)
+        infoLayout.addView(descText)
+
+        val actionBtn = Button(this).apply {
+            val isInstalled = isShellInstalled(shell.command)
+            text = if (isInstalled) "فتح" else "تنزيل"
+            setBackgroundColor(Color.parseColor(if (isInstalled) "#238636" else "#21262D"))
+            setTextColor(Color.WHITE)
+
+            setOnClickListener {
+                if (isShellInstalled(shell.command)) {
+                    val intent = Intent(this@MainActivity, TerminalActivity::class.java).apply {
+                        putExtra("EXTRA_SHELL_CMD", shell.command)
+                    }
+                    startActivity(intent)
+                } else {
+                    installShellDummy(shell.command) {
+                        text = "فتح"
+                        setBackgroundColor(Color.parseColor("#238636"))
                     }
                 }
             }
         }
+
+        card.addView(infoLayout)
+        card.addView(actionBtn)
+        return card
     }
 
     private fun isShellInstalled(command: String): Boolean {
@@ -94,56 +114,19 @@ class MainActivity : ComponentActivity() {
         return File(binDir, command).exists() || File("/system/bin/$command").exists()
     }
 
-    private fun launchTerminal(command: String) {
-        val intent = Intent(this, TerminalActivity::class.java).apply {
-            putExtra("EXTRA_SHELL_CMD", command)
-        }
-        startActivity(intent)
-    }
-
-    private fun downloadAndInstall(shell: ShellModel, onComplete: () -> Unit) {
-        Toast.makeText(this, "جاري تنزيل وتثبيت ${shell.name}...", Toast.LENGTH_SHORT).show()
+    private fun installShellDummy(command: String, onSuccess: () -> Unit) {
+        Toast.makeText(this, "جاري التثبيت...", Toast.LENGTH_SHORT).show()
         Thread {
             val binDir = File(filesDir, "usr/bin")
             if (!binDir.exists()) binDir.mkdirs()
-            
-            val targetFile = File(binDir, shell.command)
-            targetFile.writeText("#!/system/bin/sh\nexec /system/bin/sh")
-            targetFile.setExecutable(true)
+            val file = File(binDir, command)
+            file.writeText("#!/system/bin/sh\nexec /system/bin/sh")
+            file.setExecutable(true)
 
             runOnUiThread {
-                Toast.makeText(this, "تم تثبيت ${shell.name} بنجاح!", Toast.LENGTH_SHORT).show()
-                onComplete()
+                Toast.makeText(this, "تم التثبيت بنجاح!", Toast.LENGTH_SHORT).show()
+                onSuccess()
             }
         }.start()
-    }
-}
-
-@Composable
-fun ShellCard(shell: ShellModel, isInstalled: Boolean, onAction: () -> Unit) {
-    Card(
-        shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBg),
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, Color(0xFF30363D), RoundedCornerShape(10.dp))
-            .clickable { onAction() }
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = shell.name, color = TextWhite, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text(text = shell.description, color = TextMuted, fontSize = 12.sp)
-            }
-            Button(
-                onClick = onAction,
-                colors = ButtonDefaults.buttonColors(containerColor = if (isInstalled) AccentCyan else Color(0xFF21262D))
-            ) {
-                Text(text = if (isInstalled) "فتح" else "تنزيل", color = TextWhite)
-            }
-        }
     }
 }
