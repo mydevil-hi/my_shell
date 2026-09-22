@@ -19,13 +19,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - name: Build Gradle APK
+        uses: gradle/gradle-build-action@v3
         with:
-          gradle-version: '8.2'
-
-      - name: Build Debug APK
-        run: gradle assembleDebug --no-daemon
+          arguments: assembleDebug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
