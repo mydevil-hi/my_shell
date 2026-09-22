@@ -1,4 +1,4 @@
-name: Build Android Shell Launcher APK
+name: Build ShellBox APK
 
 on:
   push:
@@ -30,6 +30,6 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ShellLauncher-APK
+          name: ShellBox-APK
           path: app/build/outputs/apk/release/*.apk
           
